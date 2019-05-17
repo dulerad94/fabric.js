@@ -12,23 +12,17 @@ else if (typeof define === 'function' && define.amd) {
 /* _AMD_END_ */
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {
   if (document instanceof HTMLDocument)
-    fabric.document = document;
+    fabric.document.document = document;
   else
-    fabric.document = document.implementation.createHTMLDocument("");
+    fabric.document.document = document.implementation.createHTMLDocument("");
   fabric.window = window;
 }
 else {
   // assume we're running under node.js when document/window are not present
-  fabric.document = require('jsdom')
-    .jsdom(
-      decodeURIComponent('%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%3C%2Fhead%3E%3Cbody%3E%3C%2Fbody%3E%3C%2Fhtml%3E'),
-      { features: {
-        FetchExternalResources: ['img']
-      }
-      });
+  fabric.document = new jsdom.JSDOM('%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%3C%2Fhead%3E%3Cbody%3E%3C%2Fbody%3E%3C%2Fhtml%3E').window;
   fabric.jsdomImplForWrapper = require('jsdom/lib/jsdom/living/generated/utils').implForWrapper;
   fabric.nodeCanvas = require('jsdom/lib/jsdom/utils').Canvas;
-  fabric.window = fabric.document.defaultView;
+  fabric.window = fabric.document.document.defaultView;
   DOMParser = require('xmldom').DOMParser;
 }
 
@@ -36,7 +30,7 @@ else {
  * True when in environment that supports touch events
  * @type boolean
  */
-fabric.isTouchSupported = 'ontouchstart' in fabric.window || 'ontouchstart' in fabric.document ||
+fabric.isTouchSupported = 'ontouchstart' in fabric.window || 'ontouchstart' in fabric.document.document ||
   (fabric.window && fabric.window.navigator && fabric.window.navigator.maxTouchPoints > 0);
 
 /**
@@ -973,12 +967,12 @@ fabric.CommonMethods = {
      * @return {Object} DOM element (div containing the SVG image)
      */
     loadImageInDom: function(img, onLoadCallback) {
-      var div = fabric.document.createElement('div');
+      var div = fabric.document.document.createElement('div');
       div.style.width = div.style.height = '1px';
       div.style.left = div.style.top = '-100%';
       div.style.position = 'absolute';
       div.appendChild(img);
-      fabric.document.querySelector('body').appendChild(div);
+      fabric.document.document.querySelector('body').appendChild(div);
       /**
        * Wrap in function to:
        *   1. Call existing callback
@@ -1172,7 +1166,7 @@ fabric.CommonMethods = {
      * @return {CanvasElement} initialized canvas element
      */
     createCanvasElement: function() {
-      return fabric.document.createElement('canvas');
+      return fabric.document.document.createElement('canvas');
     },
 
     /**
@@ -1210,7 +1204,7 @@ fabric.CommonMethods = {
      * @return {HTMLImageElement} HTML image element
      */
     createImage: function() {
-      return fabric.document.createElement('img');
+      return fabric.document.document.createElement('img');
     },
 
     /**
@@ -2168,11 +2162,11 @@ fabric.CommonMethods = {
   }
 
   var shouldUseAddListenerRemoveListener = (
-        areHostMethods(fabric.document.documentElement, 'addEventListener', 'removeEventListener') &&
+        areHostMethods(fabric.document.document.documentElement, 'addEventListener', 'removeEventListener') &&
         areHostMethods(fabric.window, 'addEventListener', 'removeEventListener')),
 
       shouldUseAttachEventDetachEvent = (
-        areHostMethods(fabric.document.documentElement, 'attachEvent', 'detachEvent') &&
+        areHostMethods(fabric.document.document.documentElement, 'attachEvent', 'detachEvent') &&
         areHostMethods(fabric.window, 'attachEvent', 'detachEvent')),
 
       // IE branch
@@ -2377,7 +2371,7 @@ fabric.CommonMethods = {
     return element;
   }
 
-  var parseEl = fabric.document.createElement('div'),
+  var parseEl = fabric.document.document.createElement('div'),
       supportsOpacity = typeof parseEl.style.opacity === 'string',
       supportsFilters = typeof parseEl.style.filter === 'string',
       reOpacity = /alpha\s*\(\s*opacity\s*=\s*([^\)]+)\)/,
@@ -2426,7 +2420,7 @@ fabric.CommonMethods = {
    * @return {HTMLElement|null}
    */
   function getById(id) {
-    return typeof id === 'string' ? fabric.document.getElementById(id) : id;
+    return typeof id === 'string' ? fabric.document.document.getElementById(id) : id;
   }
 
   var sliceCanConvertNodelists,
@@ -2441,7 +2435,7 @@ fabric.CommonMethods = {
       };
 
   try {
-    sliceCanConvertNodelists = toArray(fabric.document.childNodes) instanceof Array;
+    sliceCanConvertNodelists = toArray(fabric.document.document.childNodes) instanceof Array;
   }
   catch (err) { }
 
@@ -2463,7 +2457,7 @@ fabric.CommonMethods = {
    * @return {HTMLElement} Newly created element
    */
   function makeElement(tagName, attributes) {
-    var el = fabric.document.createElement(tagName);
+    var el = fabric.document.document.createElement(tagName);
     for (var prop in attributes) {
       if (prop === 'class') {
         el.className = attributes[prop];
@@ -2519,8 +2513,8 @@ fabric.CommonMethods = {
 
     var left = 0,
         top = 0,
-        docElement = fabric.document.documentElement,
-        body = fabric.document.body || {
+        docElement = fabric.document.document.documentElement,
+        body = fabric.document.document.body || {
           scrollLeft: 0, scrollTop: 0
         };
 
@@ -2533,7 +2527,7 @@ fabric.CommonMethods = {
       // Set element to element parent, or 'host' in case of ShadowDOM
       element = element.parentNode || element.host;
 
-      if (element === fabric.document) {
+      if (element === fabric.document.document) {
         left = body.scrollLeft || docElement.scrollLeft || 0;
         top = body.scrollTop ||  docElement.scrollTop || 0;
       }
@@ -2599,9 +2593,9 @@ fabric.CommonMethods = {
    * @return {String} Style attribute value of the given element.
    */
   var getElementStyle;
-  if (fabric.document.defaultView && fabric.document.defaultView.getComputedStyle) {
+  if (fabric.document.document.defaultView && fabric.document.document.defaultView.getComputedStyle) {
     getElementStyle = function(element, attr) {
-      var style = fabric.document.defaultView.getComputedStyle(element, null);
+      var style = fabric.document.document.defaultView.getComputedStyle(element, null);
       return style ? style[attr] : undefined;
     };
   }
@@ -2616,7 +2610,7 @@ fabric.CommonMethods = {
   }
 
   (function () {
-    var style = fabric.document.documentElement.style,
+    var style = fabric.document.document.documentElement.style,
         selectProp = 'userSelect' in style
           ? 'userSelect'
           : 'MozUserSelect' in style
@@ -2678,8 +2672,8 @@ fabric.CommonMethods = {
      * @param {Function} callback Callback to execute when script is finished loading
      */
     function getScript(url, callback) {
-      var headEl = fabric.document.getElementsByTagName('head')[0],
-          scriptEl = fabric.document.createElement('script'),
+      var headEl = fabric.document.document.getElementsByTagName('head')[0],
+          scriptEl = fabric.document.document.createElement('script'),
           loading = true;
 
       /** @ignore */
@@ -11008,10 +11002,10 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
     removeListeners: function() {
       this.addOrRemove(removeListener, 'remove');
       // if you dispose on a mouseDown, before mouse up, you need to clean document to...
-      removeListener(fabric.document, 'mouseup', this._onMouseUp);
-      removeListener(fabric.document, 'touchend', this._onMouseUp, addEventOptions);
-      removeListener(fabric.document, 'mousemove', this._onMouseMove, addEventOptions);
-      removeListener(fabric.document, 'touchmove', this._onMouseMove, addEventOptions);
+      removeListener(fabric.document.document, 'mouseup', this._onMouseUp);
+      removeListener(fabric.document.document, 'touchend', this._onMouseUp, addEventOptions);
+      removeListener(fabric.document.document, 'mousemove', this._onMouseMove, addEventOptions);
+      removeListener(fabric.document.document, 'touchmove', this._onMouseMove, addEventOptions);
     },
 
     /**
@@ -11165,8 +11159,8 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
     _onMouseDown: function (e) {
       this.__onMouseDown(e);
       this._resetTransformEventData();
-      addListener(fabric.document, 'touchend', this._onMouseUp, addEventOptions);
-      addListener(fabric.document, 'touchmove', this._onMouseMove, addEventOptions);
+      addListener(fabric.document.document, 'touchend', this._onMouseUp, addEventOptions);
+      addListener(fabric.document.document, 'touchmove', this._onMouseMove, addEventOptions);
 
       removeListener(this.upperCanvasEl, 'mousemove', this._onMouseMove, addEventOptions);
       removeListener(this.upperCanvasEl, 'touchmove', this._onMouseMove, addEventOptions);
@@ -11176,8 +11170,8 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
         removeListener(this.upperCanvasEl, 'mousedown', this._onMouseDown);
       }
       else {
-        addListener(fabric.document, 'mouseup', this._onMouseUp);
-        addListener(fabric.document, 'mousemove', this._onMouseMove, addEventOptions);
+        addListener(fabric.document.document, 'mouseup', this._onMouseUp);
+        addListener(fabric.document.document, 'mousemove', this._onMouseMove, addEventOptions);
       }
     },
 
@@ -11188,11 +11182,11 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
     _onMouseUp: function (e) {
       this.__onMouseUp(e);
       this._resetTransformEventData();
-      removeListener(fabric.document, 'mouseup', this._onMouseUp);
-      removeListener(fabric.document, 'touchend', this._onMouseUp, addEventOptions);
+      removeListener(fabric.document.document, 'mouseup', this._onMouseUp);
+      removeListener(fabric.document.document, 'touchend', this._onMouseUp, addEventOptions);
 
-      removeListener(fabric.document, 'mousemove', this._onMouseMove, addEventOptions);
-      removeListener(fabric.document, 'touchmove', this._onMouseMove, addEventOptions);
+      removeListener(fabric.document.document, 'mousemove', this._onMouseMove, addEventOptions);
+      removeListener(fabric.document.document, 'touchmove', this._onMouseMove, addEventOptions);
 
       addListener(this.upperCanvasEl, 'mousemove', this._onMouseMove, addEventOptions);
       addListener(this.upperCanvasEl, 'touchmove', this._onMouseMove, addEventOptions);
@@ -27789,7 +27783,7 @@ fabric.util.object.extend(fabric.IText.prototype, /** @lends fabric.IText.protot
    * Initializes hidden textarea (needed to bring up keyboard in iOS)
    */
   initHiddenTextarea: function() {
-    this.hiddenTextarea = fabric.document.createElement('textarea');
+    this.hiddenTextarea = fabric.document.document.createElement('textarea');
     this.hiddenTextarea.setAttribute('autocapitalize', 'off');
     this.hiddenTextarea.setAttribute('autocorrect', 'off');
     this.hiddenTextarea.setAttribute('autocomplete', 'off');
@@ -27802,7 +27796,7 @@ fabric.util.object.extend(fabric.IText.prototype, /** @lends fabric.IText.protot
     this.hiddenTextarea.style.cssText = 'position: absolute; top: ' + style.top +
     '; left: ' + style.left + '; z-index: -999; opacity: 0; width: 1px; height: 1px; font-size: 1px;' +
     ' paddingｰtop: ' + style.fontSize + ';';
-    fabric.document.body.appendChild(this.hiddenTextarea);
+    fabric.document.document.body.appendChild(this.hiddenTextarea);
 
     fabric.util.addListener(this.hiddenTextarea, 'keydown', this.onKeyDown.bind(this));
     fabric.util.addListener(this.hiddenTextarea, 'keyup', this.onKeyUp.bind(this));
